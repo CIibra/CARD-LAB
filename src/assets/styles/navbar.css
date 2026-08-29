@@ -1,0 +1,14 @@
+/* Classes utilitaires optionnelles pour la navbar.
+   Le composant Navbar.jsx utilise principalement des styles inline pour
+   rester cohérent avec le reste de l'app ; ce fichier reste disponible
+   pour des ajustements globaux futurs. */
+
+.commune-select {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}

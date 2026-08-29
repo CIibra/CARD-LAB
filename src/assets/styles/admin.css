@@ -1,0 +1,19 @@
+/* Classes utilitaires pour l'espace admin.
+   AdminDashboardPage.jsx utilise actuellement des styles inline avec
+   un système d'onglets simple ; ce fichier reste disponible si tu veux
+   évoluer vers une mise en page sidebar + topbar plus tard. */
+
+.admin-btn-green {
+  background: var(--primary);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-btn-green:hover {
+  background: var(--primary-hover);
+}
