@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, UserCircle, LogIn, LogOut } from 'lucide-react';
+import { Map, BookOpen, Mail, Info, Shield, UserCircle, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import AuthModal from '../auth/AuthModal';
 import LogoMac from './LogoMac';
-import { BASE_TABS } from './navTabs';
 import { COLORS } from '../../theme';
+
+const BASE_TABS = [
+  { to: '/', label: 'Carte & Signalements', icon: Map, end: true },
+  { to: '/valeurs', label: 'Éducation & Valeurs', icon: BookOpen },
+  { to: '/contact', label: 'Contacter le MAC', icon: Mail, hideForAdmin: true },
+  { to: '/a-propos', label: 'À propos', icon: Info }
+];
 
 export default function Navbar() {
   const { user, profile, logout, isAdmin } = useAuth();
@@ -67,7 +73,6 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Navigation desktop — masquée sur mobile, remplacée par BottomTabBar */}
       <nav className="main-nav" style={{ background: '#fff', borderBottom: `1px solid ${COLORS.border}`, padding: '0 16px', display: 'flex', gap: '18px' }}>
         {tabs.map(tab => {
           const Icon = tab.icon;
@@ -90,7 +95,7 @@ export default function Navbar() {
                 fontSize: '13px'
               })}
             >
-              <Icon size={15} /> {tab.fullLabel}
+              <Icon size={15} /> {tab.label}
             </NavLink>
           );
         })}

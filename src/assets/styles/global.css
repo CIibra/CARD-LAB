@@ -57,32 +57,6 @@ button {
   height: 3px;
 }
 
-/* Barre de navigation en bas d'écran : masquée par défaut (desktop) */
-.bottom-tab-bar {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  /* La nav du haut cède la place à la barre fixe du bas, plus fluide
-     qu'un défilement horizontal (peu fiable sur certains WebView anciens) */
-  .main-nav {
-    display: none !important;
-  }
-  .bottom-tab-bar {
-    display: flex !important;
-  }
-
-  /* Le footer (liens/copyright) est redondant avec la barre du bas sur mobile */
-  .site-footer {
-    display: none;
-  }
-
-  /* Espace réservé en bas du contenu pour ne jamais passer sous la barre fixe */
-  .app-content {
-    padding-bottom: 78px !important;
-  }
-}
-
 @media (max-width: 640px) {
   /* Titre plus compact, jamais tronqué de façon moche */
   .site-title {

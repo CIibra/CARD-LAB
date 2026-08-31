@@ -1,41 +1,6 @@
-# Carte Citoyenne MAC — Mise à jour v16 — Optimisation mobile & APK en profondeur
+# Carte Citoyenne MAC — Mise à jour v15 — App Android installable
 
-## 🆕 Nouveautés v16
-
-- **Barre de navigation en bas d'écran sur mobile** (comme une vraie app
-  installée) : remplace la navigation du haut qui nécessitait un défilement
-  horizontal peu fluide sur certains WebView anciens (celui qui posait
-  problème sur ton téléphone). Icônes + petit libellé, fixe en bas, jamais de
-  scroll nécessaire. La navigation du haut reste inchangée sur desktop.
-- **Footer masqué sur mobile** : redondant avec la nouvelle barre du bas,
-  retiré pour alléger l'écran et éviter la duplication des liens.
-- **Fenêtre "chapitres" (Éducation & Valeurs) repensée** : le bouton
-  "Suivant" est maintenant un gros bouton plein largeur, impossible à
-  manquer. Les petits points de progression ont été retirés (redondants
-  avec le "Chapitre X/14" déjà affiché en haut) — moins encombré, plus
-  clair. Sur le dernier chapitre, le bouton devient "Terminer" (ferme la
-  fenêtre) plutôt qu'un bouton grisé sans action.
-- **Nouveau fichier `navTabs.js`** : configuration partagée entre la nav
-  desktop et la barre mobile, pour éviter toute incohérence entre les deux.
-
-Aucun changement SQL pour cette version — uniquement composants React et CSS.
-
-## 🔁 Pour l'app mobile (APK)
-
-Ce correctif s'applique à la fois au site web et à l'app Android. Après avoir
-fusionné ces fichiers :
-
-```
-npm run build
-npx cap sync android
-```
-
-Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**,
-récupère le nouveau `app-debug.apk` via "locate", et réinstalle-le.
-
----
-
-
+## 🆕 Nouveautés v15
 
 - **`capacitor.config.ts`** ajouté à la racine du projet.
 - **URL de réinitialisation de mot de passe fixée** (`AuthContext.jsx`) :
