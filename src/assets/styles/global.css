@@ -46,9 +46,84 @@ button {
   }
 }
 
+/* Nav principale : défilement horizontal plutôt qu'un retour à la ligne
+   encombrant, dès que les onglets ne tiennent plus sur une ligne. */
+.main-nav {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.main-nav::-webkit-scrollbar {
+  height: 3px;
+}
+
+/* Barre de navigation en bas d'écran : masquée par défaut (desktop) */
+.bottom-tab-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* La nav du haut cède la place à la barre fixe du bas, plus fluide
+     qu'un défilement horizontal (peu fiable sur certains WebView anciens) */
+  .main-nav {
+    display: none !important;
+  }
+  .bottom-tab-bar {
+    display: flex !important;
+  }
+
+  /* Le footer (liens/copyright) est redondant avec la barre du bas sur mobile */
+  .site-footer {
+    display: none;
+  }
+
+  /* Espace réservé en bas du contenu pour ne jamais passer sous la barre fixe */
+  .app-content {
+    padding-bottom: 78px !important;
+  }
+}
+
 @media (max-width: 640px) {
-  header h1 {
+  /* Titre plus compact, jamais tronqué de façon moche */
+  .site-title {
     font-size: 15px !important;
-    white-space: normal !important;
+  }
+
+  /* Boutons de connexion/déconnexion : icône seule, texte masqué */
+  .auth-btn-text {
+    display: none;
+  }
+  .auth-btn {
+    padding: 8px !important;
+  }
+
+  /* Le nom de l'utilisateur connecté prend moins de place */
+  .user-name-text {
+    max-width: 70px !important;
+    font-size: 12px !important;
+  }
+
+  header {
+    padding: 8px 10px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .site-title {
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .filter-selects {
+    width: 100%;
+  }
+  .filter-selects select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .report-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

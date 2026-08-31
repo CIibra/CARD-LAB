@@ -1,6 +1,195 @@
-# Carte Citoyenne MAC — Mise à jour v12
+# Carte Citoyenne MAC — Mise à jour v16 — Optimisation mobile & APK en profondeur
 
-## 🆕 Nouveautés v12
+## 🆕 Nouveautés v16
+
+- **Barre de navigation en bas d'écran sur mobile** (comme une vraie app
+  installée) : remplace la navigation du haut qui nécessitait un défilement
+  horizontal peu fluide sur certains WebView anciens (celui qui posait
+  problème sur ton téléphone). Icônes + petit libellé, fixe en bas, jamais de
+  scroll nécessaire. La navigation du haut reste inchangée sur desktop.
+- **Footer masqué sur mobile** : redondant avec la nouvelle barre du bas,
+  retiré pour alléger l'écran et éviter la duplication des liens.
+- **Fenêtre "chapitres" (Éducation & Valeurs) repensée** : le bouton
+  "Suivant" est maintenant un gros bouton plein largeur, impossible à
+  manquer. Les petits points de progression ont été retirés (redondants
+  avec le "Chapitre X/14" déjà affiché en haut) — moins encombré, plus
+  clair. Sur le dernier chapitre, le bouton devient "Terminer" (ferme la
+  fenêtre) plutôt qu'un bouton grisé sans action.
+- **Nouveau fichier `navTabs.js`** : configuration partagée entre la nav
+  desktop et la barre mobile, pour éviter toute incohérence entre les deux.
+
+Aucun changement SQL pour cette version — uniquement composants React et CSS.
+
+## 🔁 Pour l'app mobile (APK)
+
+Ce correctif s'applique à la fois au site web et à l'app Android. Après avoir
+fusionné ces fichiers :
+
+```
+npm run build
+npx cap sync android
+```
+
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**,
+récupère le nouveau `app-debug.apk` via "locate", et réinstalle-le.
+
+---
+
+
+
+- **`capacitor.config.ts`** ajouté à la racine du projet.
+- **URL de réinitialisation de mot de passe fixée** (`AuthContext.jsx`) :
+  utilise maintenant une URL fixe plutôt que `window.location.origin`, pour
+  fonctionner correctement une fois packagé en app mobile. Mets à jour la
+  constante `PRODUCTION_URL` si ton nom de domaine change un jour.
+
+## 📱 Guide complet — obtenir un vrai fichier .apk installable
+
+Toutes ces commandes se lancent depuis la racine de ton projet
+(`C:\Users\DELL\Desktop\MAC\carte-citoyenne`), après avoir fusionné ce zip.
+
+### Étape 1 — Installer Capacitor
+
+```
+npm install @capacitor/core @capacitor/cli
+npm install @capacitor/android
+```
+
+### Étape 2 — Ajouter la plateforme Android
+
+Le fichier `capacitor.config.ts` fourni dans ce zip sert de configuration :
+pas besoin de relancer `npx cap init`.
+
+```
+npx cap add android
+```
+
+Ça crée un dossier `android/` à la racine : un vrai projet Android Studio complet.
+
+### Étape 3 — Construire le site et le synchroniser dans l'app
+
+```
+npm run build
+npx cap sync android
+```
+
+À refaire à chaque fois que tu modifies le code web et veux que ça se
+reflète dans l'app mobile.
+
+### Étape 4 — Ouvrir dans Android Studio
+
+```
+npx cap open android
+```
+
+Android Studio s'ouvre avec le projet chargé (patience la première fois,
+il indexe et télécharge des dépendances Gradle).
+
+### Étape 5 — Générer le fichier .apk installable
+
+Dans Android Studio :
+1. Menu **Build** → **Build Bundle(s) / APK(s)** → **Build APK(s)**
+2. Attends la fin du build (barre de progression en bas)
+3. Une notification apparaît : **"APK(s) generated successfully"** avec un
+   lien **"locate"** — clique dessus
+4. Le fichier `app-debug.apk` s'ouvre dans l'explorateur de fichiers
+
+Ce fichier `.apk` est **directement installable** sur n'importe quel
+téléphone Android : envoie-le par email, clé USB, ou Google Drive, et
+installe-le (il faudra peut-être activer "Autoriser l'installation
+d'apps inconnues" dans les réglages du téléphone la première fois).
+
+### 🔜 Pour publier sur le Play Store plus tard
+
+Ce fichier `.apk` "debug" suffit pour tester sur de vrais téléphones dès
+maintenant. Pour une publication officielle sur le Play Store, il faudra
+générer une version "signée" (Build → Generate Signed Bundle / APK), avec
+une clé de signature à créer et **à conserver précieusement** (indispensable
+pour toute future mise à jour de l'app publiée). On abordera cette étape le
+moment venu.
+
+### 🎨 Optionnel — icône personnalisée de l'app
+
+Par défaut, l'app utilise l'icône générique Android. Pour utiliser le logo
+MAC :
+
+```
+npm install -D @capacitor/assets
+```
+
+Crée un dossier `resources/` à la racine avec une image `icon.png` (carrée,
+1024x1024 px — tu peux repartir de `src/assets/logo-mac.png` en l'agrandissant),
+puis :
+
+```
+npx capacitor-assets generate --iconBackgroundColor "#0e7a4f" --iconBackgroundColorDark "#0e7a4f"
+npx cap sync android
+```
+
+### ⚠️ iOS (mis de côté pour l'instant)
+
+Tu as indiqué ne pas avoir de Mac actuellement — la compilation iOS
+nécessite obligatoirement Xcode sur macOS (restriction Apple, aucune
+alternative Windows). On reprendra cette partie si tu as accès à un Mac,
+ou via un service de build iOS dans le cloud (MacStadium, Codemagic...) le
+moment venu.
+
+---
+
+
+
+- **Titre raccourci** : "Carte Citoyenne" (au lieu de "La carte des citoyens
+  ivoiriens", trop long sur mobile).
+- **Boutons connexion/déconnexion en icônes** : sur mobile (< 640px), le texte
+  est masqué et seule une icône reste visible (`LogIn`/`LogOut` de
+  lucide-react — aucune représentation humaine). Le texte réapparaît sur
+  desktop.
+- **Nom d'utilisateur tronqué proprement** sur mobile (plus de débordement).
+- **Navigation devenue défilable horizontalement** au lieu de revenir à la
+  ligne de façon encombrante quand tous les onglets ne tiennent pas.
+- **Barre de filtres empilée en pleine largeur** sur mobile (< 560px) :
+  sélecteurs et bouton "Signaler" prennent toute la largeur au lieu d'être
+  compressés côte à côte.
+- **En-tête plus compact** sur petits écrans (padding réduit, taille de
+  police adaptative jusqu'à 13px sur les très petits écrans).
+
+Aucun changement SQL pour cette version — uniquement CSS et composants React.
+
+---
+
+
+
+- **Complément d'adresse (facultatif)** : nouveau champ pour préciser un lieu
+  exact au-delà du quartier ("3ème maison après la pharmacie, portail bleu...").
+  Même règle de visibilité que le quartier : masqué publiquement, révélé au
+  prestataire une fois sa solution acceptée par le MAC. Modifiable comme le
+  reste tant que le signalement est au statut `Nouveau`.
+
+- **Téléphone du déclarant (obligatoire) — protection renforcée** : contrairement
+  au quartier/complément d'adresse (simplement masqués à l'écran), le
+  téléphone est stocké dans une **table séparée avec ses propres règles
+  d'accès en base de données** (`issue_contact_info`). Concrètement :
+  - **Seul un compte `mac_admin` peut le lire** — même en interrogeant
+    directement l'API Supabase, un prestataire ou un citoyen ne peut
+    techniquement pas y accéder (pas seulement "caché à l'écran").
+  - **Jamais révélé à un prestataire**, même après acceptation de sa solution
+    (contrairement à l'adresse).
+  - Visible côté admin en cliquant sur une ligne du tableau "Signalements"
+    (ouvre la fenêtre de détail, avec mention "Confidentiel — réservé à
+    l'équipe MAC").
+  - Un texte rassurant s'affiche sous le champ au moment de la saisie,
+    expliquant cette protection.
+
+## 🗄️ Étape SQL supplémentaire
+
+Exécute `supabase/fix_v13.sql` : ajoute la colonne `adresse_complement` sur
+`issues`, et crée la table `issue_contact_info` avec ses policies dédiées
+(insertion par l'auteur du signalement, lecture strictement réservée à
+l'admin).
+
+---
+
+
 
 - **Adresse précise masquée tant qu'aucune solution n'est validée** : le
   champ "quartier / repère" (adresse exacte, ex: "Quartier Saint Jean, près

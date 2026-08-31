@@ -67,8 +67,14 @@ export function AuthProvider({ children }) {
   const logout = () => supabase.auth.signOut();
 
   // Envoie un email avec un lien de réinitialisation
+  // URL fixe plutôt que window.location.origin : dans l'app mobile (Capacitor),
+  // window.location.origin pointe vers une adresse locale interne (ex: https://localhost)
+  // et non vers ton vrai site — le lien reçu par email ne fonctionnerait pas.
+  // ⚠️ Mets à jour cette URL si ton nom de domaine change.
+  const PRODUCTION_URL = 'https://card-lab.ibrahimentrepeneur.workers.dev';
+
   const requestPasswordReset = (email) => supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`
+    redirectTo: `${PRODUCTION_URL}/reinitialiser-mot-de-passe`
   });
 
   // Appelé depuis la page de réinitialisation, une fois le lien cliqué

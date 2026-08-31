@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { IssueProvider } from './context/IssueContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import BottomTabBar from './components/common/BottomTabBar';
 import HomePage from './pages/HomePage';
 import ValeursPage from './pages/ValeursPage';
 import ContactPage from './pages/ContactPage';
@@ -19,7 +20,7 @@ export default function App() {
         <BrowserRouter>
           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', color: '#0f172a', backgroundColor: '#f8fafc' }}>
             <Navbar />
-            <div style={{ flex: 1, paddingBottom: '24px' }}>
+            <div className="app-content" style={{ flex: 1, paddingBottom: '24px' }}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/valeurs" element={<ValeursPage />} />
@@ -30,7 +31,10 @@ export default function App() {
                 <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
               </Routes>
             </div>
-            <Footer />
+            <div className="site-footer">
+              <Footer />
+            </div>
+            <BottomTabBar />
           </div>
         </BrowserRouter>
       </IssueProvider>
