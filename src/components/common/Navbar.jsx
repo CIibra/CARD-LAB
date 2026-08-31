@@ -37,7 +37,7 @@ export default function Navbar() {
 
         <div style={{ textAlign: 'center', minWidth: 0 }}>
           <h1 className="site-title" style={{ fontSize: '19px', fontWeight: '800', margin: 0, whiteSpace: 'nowrap' }}>
-            Carte Citoyenne
+            La carte des citoyens
           </h1>
         </div>
 
