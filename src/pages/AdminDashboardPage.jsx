@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useIssues } from '../context/IssueContext';
+import { useProjects } from '../context/ProjectContext';
 import { supabase } from '../services/supabaseClient';
 import AdminStats from '../components/admin/AdminStats';
 import AdminCharts from '../components/admin/AdminCharts';
@@ -9,17 +10,22 @@ import IssueModerationTable from '../components/admin/IssueModerationTable';
 import SolutionValidationList from '../components/admin/SolutionValidationList';
 import ResolutionConfirmList from '../components/admin/ResolutionConfirmList';
 import ContactMessagesList from '../components/admin/ContactMessagesList';
+import ProjectModerationList from '../components/admin/ProjectModerationList';
+import EngagementModerationList from '../components/admin/EngagementModerationList';
 import IssueDetailModal from '../components/citizen/IssueDetailModal';
 import { COLORS } from '../theme';
 
 export default function AdminDashboardPage() {
   const { user, profile, loading: authLoading, isAdmin } = useAuth();
-  const { issues, updateIssueStatus, fetchAllSolutions, updateSolutionStatus } = useIssues();
+  const { issues, fetchIssues, updateIssueStatus, fetchAllSolutions, updateSolutionStatus } = useIssues();
+  const { projects, fetchProjects, updateProjectStatus, fetchAllEngagements, updateEngagementStatus } = useProjects();
 
   const [solutions, setSolutions] = useState([]);
   const [solutionsLoading, setSolutionsLoading] = useState(true);
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
+  const [engagements, setEngagements] = useState([]);
+  const [engagementsLoading, setEngagementsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [detailIssue, setDetailIssue] = useState(null);
 
@@ -45,12 +51,22 @@ export default function AdminDashboardPage() {
     setMessagesLoading(false);
   }, []);
 
+  const loadEngagements = useCallback(async () => {
+    setEngagementsLoading(true);
+    const data = await fetchAllEngagements();
+    setEngagements(data);
+    setEngagementsLoading(false);
+  }, [fetchAllEngagements]);
+
   useEffect(() => {
     if (isAdmin) {
+      fetchIssues();
+      fetchProjects();
       loadSolutions();
       loadMessages();
+      loadEngagements();
     }
-  }, [isAdmin, loadSolutions, loadMessages]);
+  }, [isAdmin, fetchIssues, fetchProjects, loadSolutions, loadMessages, loadEngagements]);
 
   const filteredIssues = useMemo(() => issues.filter(i => {
     const matchStatus = statusFilter === 'Toutes' || i.status === statusFilter;
@@ -120,9 +136,27 @@ export default function AdminDashboardPage() {
     setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, admin_reply: replyText, status: 'Traité' } : m)));
   };
 
+  const handleValidateProject = async (projectId, status, reason = null) => {
+    const result = await updateProjectStatus(projectId, status, reason);
+    if (!result.success) {
+      alert("Erreur lors de la validation du projet : " + (result.error?.message || ''));
+    }
+  };
+
+  const handleValidateEngagement = async (engagementId, status) => {
+    const result = await updateEngagementStatus(engagementId, status);
+    if (!result.success) {
+      alert("Erreur lors de la mise à jour de l'engagement : " + (result.error?.message || ''));
+      return;
+    }
+    setEngagements(prev => prev.map(e => (e.id === engagementId ? { ...e, status } : e)));
+  };
+
   const pendingSolutions = solutions.filter(s => s.status === 'proposé').length;
   const pendingResolutions = solutions.filter(s => s.status === 'terminé' && s.issues?.status !== 'Résolu').length;
   const newMessages = messages.filter(m => m.status !== 'Traité').length;
+  const pendingProjects = projects.filter(p => p.status === 'En attente').length;
+  const pendingEngagements = engagements.filter(e => e.status === 'Nouveau').length;
 
   const TABS = [
     { id: 'overview', label: "Vue d'ensemble" },
@@ -130,6 +164,8 @@ export default function AdminDashboardPage() {
     { id: 'issues', label: `Signalements (${issues.length})` },
     { id: 'solutions', label: `Solutions à valider (${pendingSolutions})` },
     { id: 'resolutions', label: `Résolutions à confirmer (${pendingResolutions})` },
+    { id: 'projects', label: `Projets à valider (${pendingProjects})` },
+    { id: 'engagements', label: `Engagements (${pendingEngagements})` },
     { id: 'messages', label: `Messages (${newMessages})` }
   ];
 
@@ -140,7 +176,7 @@ export default function AdminDashboardPage() {
           Espace Administration MAC
         </h1>
         <p style={{ fontSize: '13px', color: COLORS.slate, margin: '4px 0 0' }}>
-          Connecté en tant que {profile?.full_name} — gestion des signalements, solutions et messages reçus.
+          Connecté en tant que {profile?.full_name} — gestion des signalements, projets, solutions et messages reçus.
         </p>
       </div>
 
@@ -221,6 +257,31 @@ export default function AdminDashboardPage() {
             <p style={{ fontSize: '13px', color: '#94a3b8' }}>Chargement…</p>
           ) : (
             <ResolutionConfirmList solutions={solutions} onConfirm={handleConfirmResolution} />
+          )}
+        </div>
+      )}
+
+      {activeTab === 'projects' && (
+        <div style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '20px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>Projets soumis à validation</h3>
+          <p style={{ fontSize: '12px', color: COLORS.slate, marginBottom: '14px' }}>
+            Publie les projets pertinents, ou refuse-les avec une raison visible par leur porteur.
+          </p>
+          <ProjectModerationList projects={projects} onValidate={handleValidateProject} />
+        </div>
+      )}
+
+      {activeTab === 'engagements' && (
+        <div style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '20px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px' }}>Engagements citoyens sur les projets</h3>
+          <p style={{ fontSize: '12px', color: COLORS.slate, marginBottom: '14px' }}>
+            Vérifie chaque demande avant de "Valider" — le téléphone ne devient visible pour le porteur
+            du projet qu'à ce moment-là.
+          </p>
+          {engagementsLoading ? (
+            <p style={{ fontSize: '13px', color: '#94a3b8' }}>Chargement…</p>
+          ) : (
+            <EngagementModerationList engagements={engagements} onValidate={handleValidateEngagement} />
           )}
         </div>
       )}

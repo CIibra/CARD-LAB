@@ -8,6 +8,7 @@ import SolutionModal from '../components/citizen/SolutionModal';
 import IssueDetailModal from '../components/citizen/IssueDetailModal';
 import { REGIONS_CI, CI_CENTER_COORDS, ZOOM_PAYS, ZOOM_REGION } from '../data/regionsCI';
 import { timeAgo } from '../utils/timeAgo';
+import { Map as MapIcon, List } from 'lucide-react';
 
 // Un signalement Résolu ou Archivé sort de la vue publique (carte + urgences récentes)
 // mais reste bien compté partout ailleurs (stats admin, tableau de modération, profil).
@@ -15,7 +16,16 @@ const HIDDEN_FROM_PUBLIC_VIEW = ['Résolu', 'Archivé'];
 
 export default function HomePage() {
   const { user, isAdmin } = useAuth();
-  const { issues, loading, fetchMyClearedIssueIds } = useIssues();
+  const { issues, loading, fetchIssues, fetchMyClearedIssueIds } = useIssues();
+
+  // Rafraîchit à chaque arrivée sur la page, puis en tâche de fond toutes les
+  // 30s tant qu'on y reste — plus besoin de quitter/relancer l'app pour voir
+  // les changements (signalement résolu, nouveau signalement d'un tiers, etc.)
+  useEffect(() => {
+    fetchIssues();
+    const interval = setInterval(fetchIssues, 30000);
+    return () => clearInterval(interval);
+  }, [fetchIssues]);
 
   const [clearedIssueIds, setClearedIssueIds] = useState(new Set());
 
@@ -47,6 +57,7 @@ export default function HomePage() {
   const [isSolutionOpen, setIsSolutionOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [detailIssue, setDetailIssue] = useState(null);
+  const [showMap, setShowMap] = useState(true);
 
   const handleRegionChangeEffect = (region) => {
     setSelectedRegion(region);
@@ -91,7 +102,32 @@ export default function HomePage() {
 
   return (
     <div style={{ padding: '20px 20px 48px', maxWidth: '1400px', margin: '0 auto' }}>
-      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
+          <button
+            onClick={() => setShowMap(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', border: 'none', cursor: 'pointer',
+              background: showMap ? '#12384a' : '#fff', color: showMap ? '#fff' : '#64748b',
+              fontSize: '12px', fontWeight: '700'
+            }}
+          >
+            <MapIcon size={14} /> Carte + Liste
+          </button>
+          <button
+            onClick={() => setShowMap(false)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', border: 'none', cursor: 'pointer',
+              background: !showMap ? '#12384a' : '#fff', color: !showMap ? '#fff' : '#64748b',
+              fontSize: '12px', fontWeight: '700'
+            }}
+          >
+            <List size={14} /> Liste seule
+          </button>
+        </div>
+      </div>
+
+      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: showMap ? '1fr 340px' : '1fr', gap: '20px' }}>
         <div>
           <FilterBar
             selectedRegion={selectedRegion}
@@ -102,15 +138,56 @@ export default function HomePage() {
             setSelectedCategory={setSelectedCategory}
             onOpenReport={() => setIsReportOpen(true)}
           />
-          <MapView
-            issues={filteredIssues}
-            center={mapCenter}
-            zoom={mapZoom}
-            onProposeSolution={openSolution}
-            canSeeAddress={canSeeAddress}
-          />
+          {showMap && (
+            <MapView
+              issues={filteredIssues}
+              center={mapCenter}
+              zoom={mapZoom}
+              onProposeSolution={openSolution}
+              canSeeAddress={canSeeAddress}
+            />
+          )}
+
+          {!showMap && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+              {filteredIssues.length === 0 && (
+                <p style={{ fontSize: '13px', color: '#94a3b8', gridColumn: '1 / -1', textAlign: 'center', padding: '30px' }}>
+                  Aucun signalement pour ces filtres.
+                </p>
+              )}
+              {filteredIssues.map(issue => (
+                <div
+                  key={issue.id}
+                  onClick={() => setDetailIssue(issue)}
+                  style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', background: '#fff', cursor: 'pointer' }}
+                >
+                  {issue.photos && issue.photos.length > 0 && (
+                    <img src={issue.photos[0]} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
+                  )}
+                  <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600' }}>{issue.commune}</span>
+                  <h4 style={{ fontSize: '13px', fontWeight: '700', margin: '2px 0 6px', color: '#1e293b' }}>{issue.title}</h4>
+                  <p style={{
+                    fontSize: '11px', color: '#64748b', margin: '0 0 8px', lineHeight: '1.3',
+                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                  }}>
+                    {issue.description}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '9px', color: '#94a3b8' }}>{timeAgo(issue.created_at)}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openSolution(issue); }}
+                      style={{ background: '#fff', border: '1px solid #12384a', color: '#12384a', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                      Proposer une solution
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
+        {showMap && (
         <div style={{ background: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
           <h3 style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', marginBottom: '12px' }}>
             🔴 Urgences Récentes ({activeIssues.length} en cours)
@@ -174,6 +251,7 @@ export default function HomePage() {
             })}
           </div>
         </div>
+        )}
       </div>
 
       <ReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} onCreated={handleCreated} />

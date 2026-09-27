@@ -2,13 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useIssues } from '../context/IssueContext';
+import { useProjects } from '../context/ProjectContext';
 import { supabase } from '../services/supabaseClient';
 import BadgeStatus from '../components/common/BadgeStatus';
 import EditIssueModal from '../components/citizen/EditIssueModal';
 import IssueDetailModal from '../components/citizen/IssueDetailModal';
 import CompleteSolutionModal from '../components/citizen/CompleteSolutionModal';
+import MyProjectCard from '../components/citizen/MyProjectCard';
 import { CATEGORIES } from '../data/regionsCI';
 import { timeAgo } from '../utils/timeAgo';
+import { markProfilAsSeen } from '../hooks/useProfileNotifications';
 import { COLORS } from '../theme';
 
 const SOLUTION_STATUS_STYLE = {
@@ -21,7 +24,8 @@ const SOLUTION_STATUS_STYLE = {
 
 export default function ProfilePage() {
   const { user, profile, loading: authLoading } = useAuth();
-  const { issues, fetchAllSolutions, updateSolutionStatus, deleteIssue } = useIssues();
+  const { issues, fetchIssues, fetchAllSolutions, updateSolutionStatus, deleteIssue } = useIssues();
+  const { projects } = useProjects();
 
   const [mySolutions, setMySolutions] = useState([]);
   const [myMessages, setMyMessages] = useState([]);
@@ -32,10 +36,16 @@ export default function ProfilePage() {
   const [detailIssue, setDetailIssue] = useState(null);
   const [completingSolution, setCompletingSolution] = useState(null);
 
+  // Marque le profil comme "vu" (éteint le point de notification) dès l'arrivée sur la page
+  useEffect(() => {
+    if (user) markProfilAsSeen(user.id);
+  }, [user]);
+
   const loadExtra = useCallback(async () => {
     if (!user) return;
     setLoadingExtra(true);
 
+    await fetchIssues(); // toujours à jour, plus besoin de quitter/relancer l'app
     const allSolutions = await fetchAllSolutions();
     setMySolutions(allSolutions.filter(s => s.provider_id === user.id));
 
@@ -47,7 +57,7 @@ export default function ProfilePage() {
     setMyMessages(msgs || []);
 
     setLoadingExtra(false);
-  }, [user, fetchAllSolutions]);
+  }, [user, fetchIssues, fetchAllSolutions]);
 
   useEffect(() => { loadExtra(); }, [loadExtra]);
 
@@ -65,6 +75,7 @@ export default function ProfilePage() {
   }
 
   const myIssues = issues.filter(i => i.user_id === user.id);
+  const myProjects = projects.filter(p => p.user_id === user.id);
 
   const advanceSolution = async (solution, newStatus) => {
     setUpdatingId(solution.id);
@@ -88,6 +99,7 @@ export default function ProfilePage() {
   const TABS = [
     { id: 'signalements', label: `Mes signalements (${myIssues.length})` },
     { id: 'solutions', label: `Mes propositions (${mySolutions.length})` },
+    { id: 'projets', label: `Mes projets (${myProjects.length})` },
     { id: 'messages', label: `Mes messages (${myMessages.length})` }
   ];
 
@@ -239,6 +251,13 @@ export default function ProfilePage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {activeTab === 'projets' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {myProjects.length === 0 && <EmptyState text="Vous n'avez pas encore proposé de projet." />}
+          {myProjects.map(project => <MyProjectCard key={project.id} project={project} />)}
         </div>
       )}
 

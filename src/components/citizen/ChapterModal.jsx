@@ -78,34 +78,27 @@ export default function ChapterModal({ chapters, currentIndex, onClose, onGoTo }
           </ul>
         </div>
 
-        {/* Footer navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderTop: `1px solid ${COLORS.border}`, flexShrink: 0 }}>
+        {/* Footer navigation : deux boutons pleine largeur, toujours bien visibles */}
+        <div style={{ display: 'flex', gap: '10px', padding: '14px 20px', borderTop: `1px solid ${COLORS.border}`, flexShrink: 0 }}>
           <button
             onClick={goPrev}
             disabled={currentIndex === 0}
-            style={{ ...navBtn, opacity: currentIndex === 0 ? 0.35 : 1, cursor: currentIndex === 0 ? 'default' : 'pointer' }}
+            style={{
+              ...navBtnOutline,
+              flex: 1,
+              opacity: currentIndex === 0 ? 0.4 : 1,
+              cursor: currentIndex === 0 ? 'default' : 'pointer'
+            }}
           >
-            <ChevronLeft size={16} /> Précédent
+            <ChevronLeft size={18} /> Précédent
           </button>
 
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {chapters.map((_, i) => (
-              <span key={i} style={{
-                width: i === currentIndex ? '16px' : '6px',
-                height: '6px',
-                borderRadius: '3px',
-                background: i === currentIndex ? COLORS.orange : COLORS.border,
-                transition: 'all 0.2s'
-              }} />
-            ))}
-          </div>
-
           <button
-            onClick={goNext}
-            disabled={currentIndex === total - 1}
-            style={{ ...navBtn, opacity: currentIndex === total - 1 ? 0.35 : 1, cursor: currentIndex === total - 1 ? 'default' : 'pointer' }}
+            onClick={currentIndex === total - 1 ? onClose : goNext}
+            style={{ ...navBtnFilled, flex: 1 }}
           >
-            Suivant <ChevronRight size={16} />
+            {currentIndex === total - 1 ? 'Terminer' : 'Suivant'}
+            {currentIndex < total - 1 && <ChevronRight size={18} />}
           </button>
         </div>
       </div>
@@ -113,8 +106,16 @@ export default function ChapterModal({ chapters, currentIndex, onClose, onGoTo }
   );
 }
 
-const navBtn = {
-  display: 'flex', alignItems: 'center', gap: '4px',
-  background: COLORS.navy, color: '#fff', border: 'none',
-  padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '700'
+const navBtnFilled = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+  background: COLORS.orange, color: '#fff', border: 'none',
+  padding: '13px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: '800',
+  minHeight: '46px'
+};
+
+const navBtnOutline = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+  background: '#fff', color: COLORS.navy, border: `1.5px solid ${COLORS.border}`,
+  padding: '13px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: '700',
+  minHeight: '46px'
 };

@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Map, BookOpen, Mail, Info, Shield, UserCircle, LogIn, LogOut } from 'lucide-react';
+import { Shield, UserCircle, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import AuthModal from '../auth/AuthModal';
 import LogoMac from './LogoMac';
+import { BASE_TABS } from './navTabs';
+import { useProfileNotifications } from '../../hooks/useProfileNotifications';
 import { COLORS } from '../../theme';
-
-const BASE_TABS = [
-  { to: '/', label: 'Carte & Signalements', icon: Map, end: true },
-  { to: '/valeurs', label: 'Éducation & Valeurs', icon: BookOpen },
-  { to: '/contact', label: 'Contacter le MAC', icon: Mail, hideForAdmin: true },
-  { to: '/a-propos', label: 'À propos', icon: Info }
-];
 
 export default function Navbar() {
   const { user, profile, logout, isAdmin } = useAuth();
+  const { hasNotifications } = useProfileNotifications();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const tabs = BASE_TABS.filter(tab => !(tab.hideForAdmin && isAdmin));
@@ -37,15 +33,24 @@ export default function Navbar() {
 
         <div style={{ textAlign: 'center', minWidth: 0 }}>
           <h1 className="site-title" style={{ fontSize: '19px', fontWeight: '800', margin: 0, whiteSpace: 'nowrap' }}>
-            La carte des citoyens
+            Carte Citoyenne
           </h1>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'flex-end', minWidth: 0 }}>
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
               <span className="user-name-text" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
-                <UserCircle size={16} style={{ flexShrink: 0 }} />
+                <span style={{ position: 'relative', display: 'flex', flexShrink: 0 }}>
+                  <UserCircle size={16} />
+                  {hasNotifications && (
+                    <span style={{
+                      position: 'absolute', top: '-2px', right: '-2px',
+                      width: '7px', height: '7px', borderRadius: '50%',
+                      background: '#dc2626', border: '1.5px solid ' + COLORS.green
+                    }} />
+                  )}
+                </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile?.full_name || 'Utilisateur'}</span>
                 {isAdmin && <span style={{ background: COLORS.orange, padding: '1px 6px', borderRadius: '4px', fontSize: '10px', marginLeft: '2px', flexShrink: 0 }}>ADMIN</span>}
               </span>
@@ -73,6 +78,7 @@ export default function Navbar() {
         </div>
       </header>
 
+      {/* Navigation desktop — masquée sur mobile, remplacée par BottomTabBar */}
       <nav className="main-nav" style={{ background: '#fff', borderBottom: `1px solid ${COLORS.border}`, padding: '0 16px', display: 'flex', gap: '18px' }}>
         {tabs.map(tab => {
           const Icon = tab.icon;
@@ -95,7 +101,7 @@ export default function Navbar() {
                 fontSize: '13px'
               })}
             >
-              <Icon size={15} /> {tab.label}
+              <Icon size={15} /> {tab.fullLabel}
             </NavLink>
           );
         })}
@@ -111,13 +117,24 @@ export default function Navbar() {
               display: 'flex', alignItems: 'center', gap: '6px',
               whiteSpace: 'nowrap',
               flexShrink: 0,
+              position: 'relative',
               borderBottom: isActive ? `3px solid ${COLORS.green}` : '3px solid transparent',
               color: isActive ? COLORS.green : COLORS.slate,
               fontWeight: isActive ? '700' : '500',
               fontSize: '13px'
             })}
           >
-            <UserCircle size={15} /> Mon Profil
+            <span style={{ position: 'relative', display: 'flex' }}>
+              <UserCircle size={15} />
+              {hasNotifications && (
+                <span style={{
+                  position: 'absolute', top: '-3px', right: '-3px',
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: '#dc2626', border: '1.5px solid #fff'
+                }} />
+              )}
+            </span>
+            Mon Profil
           </NavLink>
         )}
 

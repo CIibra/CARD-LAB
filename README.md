@@ -1,6 +1,224 @@
-# Carte Citoyenne MAC — Mise à jour v15 — App Android installable
+# Carte Citoyenne MAC — Mise à jour v20 — Appels à Projets
 
-## 🆕 Nouveautés v15
+## 🆕 Nouveautés v20 — Nouveau pilier de la plateforme
+
+### Toggle "Carte + Liste" / "Liste seule" (page d'accueil)
+Un petit sélecteur en haut de la page "Carte & Signalements" permet de masquer
+la carte et n'afficher que la liste complète des signalements (utile sur
+connexion lente ou pour parcourir rapidement sans la carte).
+
+### Nouvel onglet séparé "Appels à Projets"
+**Bien distinct des signalements**, comme demandé — jamais mélangé.
+
+- **Tout le monde peut proposer un projet** (citoyen, association, entreprise...)
+- Le projet reste **invisible du public** tant que le MAC ne l'a pas validé
+- Une fois publié, il apparaît dans l'onglet "Appels à Projets" avec :
+  - Une **barre de progression du nombre de participants mobilisés**
+    (pas un montant — on compte les personnes qui s'engagent, quel que soit
+    leur type d'engagement)
+  - Des boutons d'engagement adaptés à ce que le projet recherche :
+    **"Je veux contribuer"**, **"Je veux financer"**, **"Je veux être
+    bénévole"**, **"Me tenir informé"**
+- **Aucun argent ne transite sur la plateforme** : "Je veux financer" capture
+  juste l'intention (montant envisagé + message), le MAC fait le lien
+  ensuite — même philosophie de tiers de confiance que pour les signalements
+- **Nouvel onglet admin "Projets à valider"** : publier ou refuser (avec
+  raison) chaque projet soumis
+
+## 🗄️ Étape SQL supplémentaire
+
+Exécute `supabase/fix_v20.sql` : crée les tables `projects` et
+`project_engagements`, avec leurs policies (lecture publique des projets
+publiés uniquement, création par tout utilisateur connecté, validation
+réservée à l'admin).
+
+## 🔁 Commandes de déploiement (web + APK)
+
+```bash
+npm run build
+wrangler deploy
+```
+
+```bash
+git add .
+git commit -m "v20 : nouvel onglet Appels à Projets, toggle carte/liste"
+git push
+```
+
+```bash
+npm run build
+npx cap sync android
+npx cap open android
+```
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+
+---
+
+
+
+## 🆕 Nouveautés v19
+
+- **Correctif du tremblement/vibration continue dans l'espace admin** :
+  toutes les fonctions de `IssueContext.jsx` étaient recréées à chaque rendu
+  (pas de `useCallback`), ce qui déclenchait une boucle de rechargement
+  infinie dans les pages qui en dépendaient (admin, profil) — visible comme
+  un tremblement/rafraîchissement continu, surtout sur téléphone. Toutes les
+  fonctions du contexte sont maintenant stabilisées.
+- **Filtres de la page d'accueil espacés** : écart entre région/ville/catégorie
+  doublé (10px → 20px), et séparation avec le bouton "Signaler un problème"
+  triplée (12px → 36px), sur desktop comme sur mobile.
+- **Notifications push (app fermée)** : mises de côté pour l'instant, on garde
+  le système actuel (rafraîchissement + point rouge quand l'app est ouverte),
+  qui reste fonctionnel et ne nécessite aucun service externe (Firebase).
+
+Aucun changement SQL pour cette version.
+
+## 🔁 Commandes de déploiement (web + APK)
+
+```bash
+npm run build
+wrangler deploy
+```
+
+```bash
+git add .
+git commit -m "v19 : correctif tremblement admin, espacement filtres"
+git push
+```
+
+```bash
+npm run build
+npx cap sync android
+npx cap open android
+```
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+
+---
+
+
+
+- **Fini le "quitter et relancer l'app" pour voir les changements** : les
+  signalements se rafraîchissent maintenant automatiquement à chaque fois
+  qu'on revient sur la carte, le profil ou l'espace admin — et en tâche de
+  fond toutes les 30 secondes tant qu'on reste sur la carte. Un signalement
+  résolu par un autre utilisateur, un nouveau signalement publié, etc.
+  apparaissent sans action de ta part.
+- **Point rouge de notification sur "Mon Profil"** (desktop et mobile) :
+  s'allume automatiquement dès qu'il y a du nouveau à voir — réponse du MAC
+  à un message, solution acceptée/refusée, ou ton propre signalement qui a
+  avancé. S'éteint dès que tu visites ton profil. Vérifié toutes les 20
+  secondes en arrière-plan.
+
+## 🗄️ Étape SQL supplémentaire
+
+Exécute `supabase/fix_v18.sql` : ajoute la colonne `updated_at` sur
+`issue_solutions`, nécessaire pour détecter quand une solution a changé de
+statut (le système de notification s'appuie dessus).
+
+## 🔁 Commandes de déploiement (web + APK)
+
+```bash
+npm run build
+wrangler deploy
+```
+
+```bash
+git add .
+git commit -m "v18 : rafraîchissement automatique, notifications profil"
+git push
+```
+
+```bash
+npm run build
+npx cap sync android
+npx cap open android
+```
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+
+---
+
+
+
+- **`@vitejs/plugin-legacy` ajouté** (correctif majeur) : résout les clics qui
+  ne déclenchaient rien ("Signaler un problème", "Proposer une solution",
+  ouverture des chapitres) sur les téléphones à WebView ancien. Contrairement
+  au précédent réglage `build.target: 'es2015'` (qui ne corrigeait que la
+  *syntaxe*), ce plugin ajoute aussi les **polyfills** nécessaires pour les
+  fonctions JavaScript modernes absentes de ces vieux moteurs — d'où les
+  clics silencieusement inopérants malgré l'affichage initial correct.
+- **Espacement renforcé** entre les filtres et le bouton "Signaler un
+  problème" sur mobile.
+- **Nom d'utilisateur et bouton déconnexion mieux séparés** dans le header
+  mobile (n'apparaissent plus confondus visuellement).
+
+## ⚙️ Nouvelles dépendances à installer
+
+```bash
+npm install -D @vitejs/plugin-legacy terser
+```
+
+## 🔁 Reconstruire pour le web ET l'app mobile
+
+```bash
+npm run build
+```
+
+Cette fois, `npm run build` produit **deux versions** du code (moderne +
+legacy avec polyfills) — le navigateur/WebView choisit automatiquement la
+bonne. C'est normal si `dist/` contient plus de fichiers qu'avant.
+
+Ensuite, déploiement web :
+```bash
+wrangler deploy
+```
+
+Et pour l'APK :
+```bash
+npx cap sync android
+npx cap open android
+```
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**,
+récupère le nouveau `app-debug.apk` via "locate", et réinstalle-le sur ton
+téléphone (par-dessus l'ancienne version, ou après désinstallation).
+
+---
+
+
+
+- **Barre de navigation en bas d'écran sur mobile** (comme une vraie app
+  installée) : remplace la navigation du haut qui nécessitait un défilement
+  horizontal peu fluide sur certains WebView anciens (celui qui posait
+  problème sur ton téléphone). Icônes + petit libellé, fixe en bas, jamais de
+  scroll nécessaire. La navigation du haut reste inchangée sur desktop.
+- **Footer masqué sur mobile** : redondant avec la nouvelle barre du bas,
+  retiré pour alléger l'écran et éviter la duplication des liens.
+- **Fenêtre "chapitres" (Éducation & Valeurs) repensée** : le bouton
+  "Suivant" est maintenant un gros bouton plein largeur, impossible à
+  manquer. Les petits points de progression ont été retirés (redondants
+  avec le "Chapitre X/14" déjà affiché en haut) — moins encombré, plus
+  clair. Sur le dernier chapitre, le bouton devient "Terminer" (ferme la
+  fenêtre) plutôt qu'un bouton grisé sans action.
+- **Nouveau fichier `navTabs.js`** : configuration partagée entre la nav
+  desktop et la barre mobile, pour éviter toute incohérence entre les deux.
+
+Aucun changement SQL pour cette version — uniquement composants React et CSS.
+
+## 🔁 Pour l'app mobile (APK)
+
+Ce correctif s'applique à la fois au site web et à l'app Android. Après avoir
+fusionné ces fichiers :
+
+```
+npm run build
+npx cap sync android
+```
+
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**,
+récupère le nouveau `app-debug.apk` via "locate", et réinstalle-le.
+
+---
+
+
 
 - **`capacitor.config.ts`** ajouté à la racine du projet.
 - **URL de réinitialisation de mot de passe fixée** (`AuthContext.jsx`) :

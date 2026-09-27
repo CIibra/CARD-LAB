@@ -57,6 +57,32 @@ button {
   height: 3px;
 }
 
+/* Barre de navigation en bas d'écran : masquée par défaut (desktop) */
+.bottom-tab-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* La nav du haut cède la place à la barre fixe du bas, plus fluide
+     qu'un défilement horizontal (peu fiable sur certains WebView anciens) */
+  .main-nav {
+    display: none !important;
+  }
+  .bottom-tab-bar {
+    display: flex !important;
+  }
+
+  /* Le footer (liens/copyright) est redondant avec la barre du bas sur mobile */
+  .site-footer {
+    display: none;
+  }
+
+  /* Espace réservé en bas du contenu pour ne jamais passer sous la barre fixe */
+  .app-content {
+    padding-bottom: 78px !important;
+  }
+}
+
 @media (max-width: 640px) {
   /* Titre plus compact, jamais tronqué de façon moche */
   .site-title {
@@ -68,13 +94,15 @@ button {
     display: none;
   }
   .auth-btn {
-    padding: 8px !important;
+    padding: 9px !important;
   }
 
-  /* Le nom de l'utilisateur connecté prend moins de place */
+  /* Le nom de l'utilisateur connecté prend moins de place, avec marge nette
+     avant le bouton de déconnexion pour éviter toute confusion visuelle */
   .user-name-text {
-    max-width: 70px !important;
-    font-size: 12px !important;
+    max-width: 56px !important;
+    font-size: 11px !important;
+    margin-right: 2px;
   }
 
   header {
@@ -91,13 +119,21 @@ button {
 @media (max-width: 560px) {
   .filter-selects {
     width: 100%;
+    gap: 20px !important;
   }
   .filter-selects select {
     flex: 1 1 100%;
     width: 100%;
+    padding: 12px 10px !important;
+    margin-bottom: 2px;
+  }
+  .filter-bar {
+    gap: 36px !important;
   }
   .report-btn {
     width: 100%;
     justify-content: center;
+    margin-top: 16px;
+    padding: 13px 16px !important;
   }
 }

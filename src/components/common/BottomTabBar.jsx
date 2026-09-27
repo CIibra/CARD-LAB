@@ -2,10 +2,12 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { BASE_TABS, PROFILE_TAB, ADMIN_TAB } from './navTabs';
+import { useProfileNotifications } from '../../hooks/useProfileNotifications';
 import { COLORS } from '../../theme';
 
 export default function BottomTabBar() {
   const { user, isAdmin } = useAuth();
+  const { hasNotifications } = useProfileNotifications();
 
   const tabs = [
     ...BASE_TABS.filter(tab => !(tab.hideForAdmin && isAdmin)),
@@ -24,6 +26,7 @@ export default function BottomTabBar() {
       {tabs.map(tab => {
         const Icon = tab.icon;
         const isAdminTab = tab.to === '/admin';
+        const isProfileTab = tab.to === '/profil';
         return (
           <NavLink
             key={tab.to}
@@ -39,7 +42,16 @@ export default function BottomTabBar() {
               color: isActive ? (isAdminTab ? COLORS.orange : COLORS.green) : COLORS.slate
             })}
           >
-            <Icon size={20} strokeWidth={2} />
+            <span style={{ position: 'relative', display: 'flex' }}>
+              <Icon size={20} strokeWidth={2} />
+              {isProfileTab && hasNotifications && (
+                <span style={{
+                  position: 'absolute', top: '-2px', right: '-4px',
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: '#dc2626', border: '1.5px solid #fff'
+                }} />
+              )}
+            </span>
             <span style={{ fontSize: '9.5px', fontWeight: '700', lineHeight: 1 }}>{tab.label}</span>
           </NavLink>
         );

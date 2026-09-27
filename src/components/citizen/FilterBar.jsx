@@ -15,10 +15,10 @@ export default function FilterBar({
   return (
     <div className="filter-bar" style={{
       background: '#fff', padding: '16px', borderRadius: '10px', border: '1px solid #cbd5e1',
-      marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px',
+      marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '36px',
       alignItems: 'center', justifyContent: 'space-between'
     }}>
-      <div className="filter-selects" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+      <div className="filter-selects" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         <select value={selectedRegion} onChange={e => handleRegionChange(e.target.value)} style={selStyle}>
           <option value="Toutes">🇨🇮 Toutes les régions (Toute la Côte d'Ivoire)</option>
           {Object.keys(REGIONS_CI).map(r => <option key={r} value={r}>{r}</option>)}

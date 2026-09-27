@@ -33,7 +33,7 @@ export function IssueProvider({ children }) {
   }, [fetchIssues]);
 
   // Ajouter un nouveau signalement (le user_id de l'auteur est maintenant bien enregistré)
-  const addIssue = async (newIssue) => {
+  const addIssue = useCallback(async (newIssue) => {
     try {
       const payload = {
         title: newIssue.title,
@@ -70,24 +70,21 @@ export function IssueProvider({ children }) {
             .insert([{ issue_id: createdIssue.id, phone: newIssue.phone }]);
           if (phoneError) {
             console.error('Erreur enregistrement téléphone:', phoneError);
-            // Le signalement est déjà créé : on ne bloque pas l'utilisateur pour autant,
-            // mais on le signale pour diagnostic.
           }
         }
 
         setIssues((prev) => [createdIssue, ...prev]);
         return { success: true, issue: createdIssue };
       }
-      await fetchIssues();
       return { success: true };
     } catch (err) {
       console.error('Exception addIssue:', err);
       return { success: false, error: err };
     }
-  };
+  }, []);
 
   // Changer le statut d'un signalement (admin, ou auto-avancement interne)
-  const updateIssueStatus = async (issueId, status) => {
+  const updateIssueStatus = useCallback(async (issueId, status) => {
     try {
       const { data, error } = await supabase
         .from('issues')
@@ -102,9 +99,9 @@ export function IssueProvider({ children }) {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, []);
 
-  const confirmIssue = async (issueId, userId) => {
+  const confirmIssue = useCallback(async (issueId, userId) => {
     try {
       const { error } = await supabase
         .from('issue_confirmations')
@@ -116,10 +113,10 @@ export function IssueProvider({ children }) {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, []);
 
   // Modifier son propre signalement (l'auteur uniquement, via policy RLS existante)
-  const updateIssue = async (issueId, updates) => {
+  const updateIssue = useCallback(async (issueId, updates) => {
     try {
       const { data, error } = await supabase
         .from('issues')
@@ -143,10 +140,10 @@ export function IssueProvider({ children }) {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, []);
 
   // Supprimer son propre signalement (autorisé uniquement si statut "Nouveau", via policy RLS)
-  const deleteIssue = async (issueId) => {
+  const deleteIssue = useCallback(async (issueId) => {
     try {
       const { error } = await supabase.from('issues').delete().eq('id', issueId);
       if (error) return { success: false, error };
@@ -156,11 +153,11 @@ export function IssueProvider({ children }) {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, []);
 
   // Proposer une solution — fait automatiquement avancer le signalement en "Solution proposée"
   // s'il n'a pas déjà progressé plus loin (ne rétrograde jamais un statut plus avancé).
-  const addSolution = async (issueId, providerId, payload) => {
+  const addSolution = useCallback(async (issueId, providerId, payload) => {
     try {
       const { data, error } = await supabase
         .from('issue_solutions')
@@ -175,18 +172,22 @@ export function IssueProvider({ children }) {
 
       if (error) return { success: false, error };
 
-      const currentIssue = issues.find(i => i.id === issueId);
-      if (currentIssue && EARLY_STATUSES.includes(currentIssue.status)) {
-        await updateIssueStatus(issueId, 'Solution proposée');
-      }
+      setIssues((prev) => {
+        const currentIssue = prev.find(i => i.id === issueId);
+        if (currentIssue && EARLY_STATUSES.includes(currentIssue.status)) {
+          // Mise à jour optimiste locale ; la vraie écriture en base suit juste après
+          updateIssueStatus(issueId, 'Solution proposée');
+        }
+        return prev;
+      });
 
       return { success: true, data };
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, [updateIssueStatus]);
 
-  const fetchAllSolutions = async () => {
+  const fetchAllSolutions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('issue_solutions')
@@ -198,11 +199,11 @@ export function IssueProvider({ children }) {
       console.error('Erreur chargement solutions:', err.message);
       return [];
     }
-  };
+  }, []);
 
   // IDs des signalements pour lesquels l'utilisateur a une solution validée
   // (accepté / en_execution / terminé) — donc autorisé à voir l'adresse exacte.
-  const fetchMyClearedIssueIds = async (userId) => {
+  const fetchMyClearedIssueIds = useCallback(async (userId) => {
     if (!userId) return new Set();
     try {
       const { data, error } = await supabase
@@ -216,40 +217,43 @@ export function IssueProvider({ children }) {
       console.error('Erreur chargement des accès autorisés:', err.message);
       return new Set();
     }
-  };
+  }, []);
 
   // Changer le statut d'une solution : utilisé par l'admin (accepté/refusé) ET par
   // le prestataire lui-même depuis son profil (en_execution/terminé).
   // issueId est optionnel : quand fourni et que le nouveau statut est "accepté",
   // le signalement lié avance automatiquement vers "Partenaire identifié".
-  const updateSolutionStatus = async (solutionId, status, issueId = null) => {
+  const updateSolutionStatus = useCallback(async (solutionId, status, issueId = null) => {
     try {
       const { data, error } = await supabase
         .from('issue_solutions')
-        .update({ status })
+        .update({ status, updated_at: new Date().toISOString() })
         .eq('id', solutionId)
         .select();
       if (error) return { success: false, error };
 
       if (issueId && status === 'accepté') {
-        const currentIssue = issues.find(i => i.id === issueId);
-        if (currentIssue && PRE_PARTNER_STATUSES.includes(currentIssue.status)) {
-          await updateIssueStatus(issueId, 'Partenaire identifié');
-        }
+        setIssues((prev) => {
+          const currentIssue = prev.find(i => i.id === issueId);
+          if (currentIssue && PRE_PARTNER_STATUSES.includes(currentIssue.status)) {
+            updateIssueStatus(issueId, 'Partenaire identifié');
+          }
+          return prev;
+        });
       }
 
       return { success: true, data };
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, [updateIssueStatus]);
 
   // Le prestataire signale la fin des travaux, avec éventuellement des photos de la réalisation
-  const completeSolution = async (solutionId, photoUrls = []) => {
+  const completeSolution = useCallback(async (solutionId, photoUrls = []) => {
     try {
       const { data, error } = await supabase
         .from('issue_solutions')
-        .update({ status: 'terminé', completion_photos: photoUrls })
+        .update({ status: 'terminé', completion_photos: photoUrls, updated_at: new Date().toISOString() })
         .eq('id', solutionId)
         .select();
       if (error) return { success: false, error };
@@ -257,7 +261,7 @@ export function IssueProvider({ children }) {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, []);
 
   return (
     <IssueContext.Provider value={{
