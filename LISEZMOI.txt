@@ -1,0 +1,12 @@
+CARTE CITOYENNE MAC - v21 + nouvelle icone (reseau citoyen orange/vert)
+
+1. Dezippe ce zip A LA RACINE de ton vrai projet (a cote de package.json et du dossier android).
+   Accepte de remplacer les fichiers existants.
+2. Double-clique sur appliquer-icone.bat (installe l'outil d'icones, genere les icones Android,
+   compile le web et synchronise avec Android).
+3. Android Studio : Build > Clean Project, puis Build APK(s).
+4. Desinstalle l'ancienne app du telephone avant d'installer le nouvel APK.
+5. Supabase : executer supabase/fix_v21.sql une fois.
+
+Contenu : src/ (code v21), supabase/ (fix_v21.sql), assets/ (sources de l'icone), appliquer-icone.bat
+Prerequis : projet Capacitor (dossier android + capacitor.config a la racine).
